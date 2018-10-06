@@ -1,5 +1,11 @@
 #include "IRC.hpp"
 
+/* 
+	Este codigo utiliza o padrao de programacao google: c++ style guide (pode ser facilmente encontrado online)
+
+	Autoria: ****Vamos colocar aqui nossos nomes e matriculas****
+*/
+
 int main(void) {
 
 	string hostname = "hostTeste";

@@ -52,3 +52,23 @@ class ServidorCliente {
 };
 
 
+class ServidorAplicativo {
+	
+	private:
+		vector<string> clientes;
+		vector<Canal> canais;
+
+		int recebeSocket;
+
+		//Constantes para identificar os comandos
+		string SAIR = "SAIR";
+		string NICK = "NICK";
+		string ENTRAR = "ENTRAR";
+		string SAIRC = "SAIRC";
+		string LISTAR = "LISTAR";
+
+	public:
+
+		void criaSocket();
+
+}
