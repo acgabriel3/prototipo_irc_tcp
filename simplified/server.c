@@ -122,13 +122,11 @@ void *handle_client(void *arg) {
 	sprintf(buff_out, "<<ENTRADA, OLÁ %s\r\n", cli->name);
 	enviar_mensagem_todos(buff_out);
 
-	/* Receive input from client */
 	if((rlen = read(cli->connfd, buff_in, sizeof(buff_in)-1)) > 0) {
 	        buff_in[rlen] = '\0';
 	        buff_out[0] = '\0';
 		remove_novalinha(buff_in);
 
-		/* Special options */
 		if(buff_in[0] == '\\') {
 			char *command, *param;
 			command = strtok(buff_in," ");
