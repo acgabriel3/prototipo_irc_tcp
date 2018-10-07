@@ -25,7 +25,7 @@ client_t *clientes[MAX_CLIENTES];
 
 void ativos_add(client_t *cl) {
 	int i;
-	for(i = 0; i<MAX_CLIENTES; i++){
+	for(i = 0; i < MAX_CLIENTES; ++i) {
 		if(!clientes[i]) {
 			clientes[i] = cl;
 			return;
@@ -33,11 +33,11 @@ void ativos_add(client_t *cl) {
 	}
 }
 
-void ativos_remover(int uid){
+void ativos_remover(int uid) {
 	int i;
-	for(i=0;i<MAX_CLIENTES;i++){
-		if(clientes[i]){
-			if(clientes[i]->uid == uid){
+	for(i = 0; i < MAX_CLIENTES; ++i) {
+		if(clientes[i]) {
+			if(clientes[i]->uid == uid) {
 				clientes[i] = NULL;
 				return;
 			}
@@ -45,62 +45,62 @@ void ativos_remover(int uid){
 	}
 }
 
-void enviar_mensagem(char *s, int uid){
+void enviar_mensagem(char *s, int uid) {
 	int i;
-	for(i=0;i<MAX_CLIENTES;i++){
-		if(clientes[i]){
-			if(clientes[i]->uid != uid){
+	for(i = 0;i < MAX_CLIENTES; ++i) {
+		if(clientes[i]) {
+			if(clientes[i]->uid != uid) {
 				write(clientes[i]->connfd, s, strlen(s));
 			}
 		}
 	}
 }
 
-void enviar_mensagem_todos(char *s){
+void enviar_mensagem_todos(char *s) {
 	int i;
-	for(i=0;i<MAX_CLIENTES;i++){
-		if(clientes[i]){
+	for(i = 0; i < MAX_CLIENTES; ++i) {
+		if(clientes[i]) {
 			write(clientes[i]->connfd, s, strlen(s));
 		}
 	}
 }
 
-void enviar_mensagem_mim(const char *s, int connfd){
+void enviar_mensagem_mim(const char *s, int connfd) {
 	write(connfd, s, strlen(s));
 }
 
-void enviar_mensagem_client(char *s, int uid){
+void enviar_mensagem_client(char *s, int uid) {
 	int i;
-	for(i=0;i<MAX_CLIENTES;i++){
-		if(clientes[i]){
-			if(clientes[i]->uid == uid){
+	for(i=0;i<MAX_CLIENTES;i++) {
+		if(clientes[i]) {
+			if(clientes[i]->uid == uid) {
 				write(clientes[i]->connfd, s, strlen(s));
 			}
 		}
 	}
 }
 
-void enviar_clientes_ativos(int connfd){
+void enviar_clientes_ativos(int connfd) {
 	int i;
 	char s[64];
-	for(i=0;i<MAX_CLIENTES;i++){
-		if(clientes[i]){
+	for(i = 0; i < MAX_CLIENTES; ++i) {
+		if(clientes[i]) {
 			sprintf(s, "<<CLIENT %d | %s\r\n", clientes[i]->uid, clientes[i]->name);
 			enviar_mensagem_mim(s, connfd);
 		}
 	}
 }
 
-void remove_novalinha(char *s){
-	while(*s != '\0'){
-		if(*s == '\r' || *s == '\n'){
+void remove_novalinha(char *s) {
+	while(*s != '\0') {
+		if(*s == '\r' || *s == '\n') {
 			*s = '\0';
 		}
 		s++;
 	}
 }
 
-void imprimir_ip_cliente(struct sockaddr_in addr){
+void imprimir_ip_cliente(struct sockaddr_in addr) {
 	printf("%d.%d.%d.%d",
 		addr.sin_addr.s_addr & 0xFF,
 		(addr.sin_addr.s_addr & 0xFF00)>>8,
@@ -108,7 +108,7 @@ void imprimir_ip_cliente(struct sockaddr_in addr){
 		(addr.sin_addr.s_addr & 0xFF000000)>>24);
 }
 
-void *handle_client(void *arg){
+void *handle_client(void *arg) {
 	char buff_out[1024];
 	char buff_in[1024];
 	int rlen;
@@ -124,27 +124,27 @@ void *handle_client(void *arg){
 	enviar_mensagem_todos(buff_out);
 
 	/* Receive input from client */
-	while((rlen = read(cli->connfd, buff_in, sizeof(buff_in)-1)) > 0){
+	while((rlen = read(cli->connfd, buff_in, sizeof(buff_in)-1)) > 0) {
 	        buff_in[rlen] = '\0';
 	        buff_out[0] = '\0';
 		remove_novalinha(buff_in);
 
 		/* Ignore empty buffer */
-		if(!strlen(buff_in)){
+		if(!strlen(buff_in)) {
 			continue;
 		}
 
 		/* Special options */
-		if(buff_in[0] == '\\'){
+		if(buff_in[0] == '\\') {
 			char *command, *param;
 			command = strtok(buff_in," ");
-			if(!strcmp(command, "\\SAIR")){
+			if(!strcmp(command, "\\SAIR")) {
 				break;
-			}else if(!strcmp(command, "\\PING")){
+			}else if(!strcmp(command, "\\PING")) {
 				enviar_mensagem_mim("<<PONG\r\n", cli->connfd);
-			}else if(!strcmp(command, "\\NICK")){
+			}else if(!strcmp(command, "\\NICK")) {
 				param = strtok(NULL, " ");
-				if(param){
+				if(param) {
 					char *old_name = strdup(cli->name);
 					strcpy(cli->name, param);
 					sprintf(buff_out, "<<NICK, %s PARA %s\r\n", old_name, cli->name);
@@ -153,14 +153,14 @@ void *handle_client(void *arg){
 				}else{
 					enviar_mensagem_mim("<<NICK NÃO PODE ESTAR VAZIO\r\n", cli->connfd);
 				}
-			}else if(!strcmp(command, "\\MENSAGEM")){
+			}else if(!strcmp(command, "\\MENSAGEM")) {
 				param = strtok(NULL, " ");
-				if(param){
+				if(param) {
 					int uid = atoi(param);
 					param = strtok(NULL, " ");
-					if(param){
+					if(param) {
 						sprintf(buff_out, "[MP][%s]", cli->name);
-						while(param != NULL){
+						while(param != NULL) {
 							strcat(buff_out, " ");
 							strcat(buff_out, param);
 							param = strtok(NULL, " ");
@@ -173,11 +173,11 @@ void *handle_client(void *arg){
 				}else{
 					enviar_mensagem_mim("<<REFERENCIA NÃO PODE ESTAR NULA\r\n", cli->connfd);
 				}
-			}else if(!strcmp(command, "\\LISTA")){
+			}else if(!strcmp(command, "\\LISTA")) {
 				sprintf(buff_out, "<<CLIENTES %d\r\n", n_clientes);
 				enviar_mensagem_mim(buff_out, cli->connfd);
 				enviar_clientes_ativos(cli->connfd);
-			}else if(!strcmp(command, "\\AJUDA")){
+			}else if(!strcmp(command, "\\AJUDA")) {
 				strcat(buff_out, "\\SAIR     Sair do servidor IRC\r\n");
 				strcat(buff_out, "\\PING     Testar servidor\r\n");
 				strcat(buff_out, "\\NICK     <nick> para alterar seu nickname\r\n");
@@ -208,7 +208,7 @@ void *handle_client(void *arg){
 	return NULL;
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
 	int i = 0, listenfd = 0, connfd = 0, max_fd = 0, fd = 0, atividade = 0;
 	struct sockaddr_in serv_addr;
 	struct sockaddr_in cli_addr;
@@ -223,7 +223,7 @@ int main(int argc, char *argv[]){
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(5000);
 
-	if(bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0){
+	if(bind(listenfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
 		perror("Socket binding failed");
 		return 1;
 	}
@@ -272,7 +272,7 @@ int main(int argc, char *argv[]){
 				return -1;
 			}
 
-			if((n_clientes+1) == MAX_CLIENTES){
+			if((n_clientes+1) == MAX_CLIENTES) {
 				printf("<<MÁXIMO DE CLIENTES ATINGIDO\n");
 				printf("<<REJEITAR ");
 				imprimir_ip_cliente(cli_addr);
@@ -286,7 +286,7 @@ int main(int argc, char *argv[]){
                 perror("send");
             }
 
-            puts("Welcome message sent successfully");
+            printf("Mensagem de boas-vindas enviada com sucesso");
 			client_t *cli = (client_t *)malloc(sizeof(client_t));
 			cli->addr = cli_addr;
 			cli->connfd = connfd;
