@@ -113,7 +113,6 @@ void *handle_client(void *arg) {
 	char buff_in[1024];
 	int rlen;
 
-	n_clientes++;
 	client_t *cli = (client_t *)arg;
 
 	printf("<<ACCEPT ");
@@ -124,22 +123,17 @@ void *handle_client(void *arg) {
 	enviar_mensagem_todos(buff_out);
 
 	/* Receive input from client */
-	while((rlen = read(cli->connfd, buff_in, sizeof(buff_in)-1)) > 0) {
+	if((rlen = read(cli->connfd, buff_in, sizeof(buff_in)-1)) > 0) {
 	        buff_in[rlen] = '\0';
 	        buff_out[0] = '\0';
 		remove_novalinha(buff_in);
-
-		/* Ignore empty buffer */
-		if(!strlen(buff_in)) {
-			continue;
-		}
 
 		/* Special options */
 		if(buff_in[0] == '\\') {
 			char *command, *param;
 			command = strtok(buff_in," ");
 			if(!strcmp(command, "\\SAIR")) {
-				break;
+				//do someth
 			} else if(!strcmp(command, "\\PING")) {
 				enviar_mensagem_mim("<<PONG\r\n", cli->connfd);
 			} else if(!strcmp(command, "\\NICK")) {
@@ -193,17 +187,18 @@ void *handle_client(void *arg) {
 			enviar_mensagem(buff_out, cli->uid);
 		}
 	}
+	else {
+		close(cli->connfd);
+		sprintf(buff_out, "<<SAIU, TCHAU %s\r\n", cli->name);
+		enviar_mensagem_todos(buff_out);
 
-	close(cli->connfd);
-	sprintf(buff_out, "<<SAIU, TCHAU %s\r\n", cli->name);
-	enviar_mensagem_todos(buff_out);
-
-	ativos_remover(cli->uid);
-	printf("<<SAIDA ");
-	imprimir_ip_cliente(cli->addr);
-	printf(" REFERENCIADO POR %d\n", cli->uid);
-	free(cli);
-	n_clientes--;
+		ativos_remover(cli->uid);
+		printf("<<SAIDA ");
+		imprimir_ip_cliente(cli->addr);
+		printf(" REFERENCIADO POR %d\n", cli->uid);
+		free(cli);
+		n_clientes--;
+	}
 
 	return NULL;
 }
@@ -212,7 +207,6 @@ int main(int argc, char *argv[]) {
 	int i = 0, listenfd = 0, connfd = 0, max_fd = 0, fd = 0, atividade = 0;
 	struct sockaddr_in serv_addr;
 	struct sockaddr_in cli_addr;
-	int sockets[MAX_CLIENTES];
 	pthread_t tid;
 	fd_set fds;
 
@@ -233,22 +227,17 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	for(i = 0; i < MAX_CLIENTES; ++i) {
-		sockets[i] = 0;
-	}
-
 	printf("<[SERVIDOR INICIADO]>\n");
 
 	while(1) {
 		FD_ZERO(&fds);
 
 		FD_SET(listenfd, &fds);
-
 		max_fd = listenfd;
 
-		for(i = 0; i < MAX_CLIENTES; ++i)
+		for(i = 0; i < n_clientes; ++i)
 		{
-			fd = sockets[i];
+			fd = clientes[i]->connfd;
 
 			if(fd > 0)
 				FD_SET(fd, &fds);
@@ -281,7 +270,7 @@ int main(int argc, char *argv[]) {
 				continue;
 			}
 
-			if( send(connfd, bemvindo, strlen(bemvindo), 0) != strlen(bemvindo))
+			if(send(connfd, bemvindo, strlen(bemvindo), 0) != strlen(bemvindo))
             {
                 perror("send");
             }
@@ -292,8 +281,16 @@ int main(int argc, char *argv[]) {
 			cli->connfd = connfd;
 			cli->uid = uid++;
 			sprintf(cli->name, "%d", cli->uid);
-
 			ativos_add(cli);
+			n_clientes++;
+
+		}
+
+		for(i = 0; i < n_clientes; ++i) {
+			fd = clientes[i]->connfd;
+
+			if(FD_ISSET(fd , &fds))
+				handle_client(clientes[i]);
 		}
 		sleep(1);
 	}
