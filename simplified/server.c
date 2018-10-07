@@ -140,9 +140,9 @@ void *handle_client(void *arg) {
 			command = strtok(buff_in," ");
 			if(!strcmp(command, "\\SAIR")) {
 				break;
-			}else if(!strcmp(command, "\\PING")) {
+			} else if(!strcmp(command, "\\PING")) {
 				enviar_mensagem_mim("<<PONG\r\n", cli->connfd);
-			}else if(!strcmp(command, "\\NICK")) {
+			} else if(!strcmp(command, "\\NICK")) {
 				param = strtok(NULL, " ");
 				if(param) {
 					char *old_name = strdup(cli->name);
@@ -150,10 +150,10 @@ void *handle_client(void *arg) {
 					sprintf(buff_out, "<<NICK, %s PARA %s\r\n", old_name, cli->name);
 					free(old_name);
 					enviar_mensagem_todos(buff_out);
-				}else{
+				} else {
 					enviar_mensagem_mim("<<NICK NÃO PODE ESTAR VAZIO\r\n", cli->connfd);
 				}
-			}else if(!strcmp(command, "\\MENSAGEM")) {
+			} else if(!strcmp(command, "\\MENSAGEM")) {
 				param = strtok(NULL, " ");
 				if(param) {
 					int uid = atoi(param);
@@ -167,17 +167,17 @@ void *handle_client(void *arg) {
 						}
 						strcat(buff_out, "\r\n");
 						enviar_mensagem_client(buff_out, uid);
-					}else{
+					} else {
 						enviar_mensagem_mim("<<MENSAGEM NÃO PODE ESTAR VAZIA\r\n", cli->connfd);
 					}
-				}else{
+				} else {
 					enviar_mensagem_mim("<<REFERENCIA NÃO PODE ESTAR NULA\r\n", cli->connfd);
 				}
-			}else if(!strcmp(command, "\\LISTA")) {
+			} else if(!strcmp(command, "\\LISTA")) {
 				sprintf(buff_out, "<<CLIENTES %d\r\n", n_clientes);
 				enviar_mensagem_mim(buff_out, cli->connfd);
 				enviar_clientes_ativos(cli->connfd);
-			}else if(!strcmp(command, "\\AJUDA")) {
+			} else if(!strcmp(command, "\\AJUDA")) {
 				strcat(buff_out, "\\SAIR     Sair do servidor IRC\r\n");
 				strcat(buff_out, "\\PING     Testar servidor\r\n");
 				strcat(buff_out, "\\NICK     <nick> para alterar seu nickname\r\n");
@@ -185,10 +185,10 @@ void *handle_client(void *arg) {
 				strcat(buff_out, "\\LISTA   Mostrar clientes ativos\r\n");
 				strcat(buff_out, "\\AJUDA     Mostrar ajuda\r\n");
 				enviar_mensagem_mim(buff_out, cli->connfd);
-			}else{
+			} else {
 				enviar_mensagem_mim("<<COMANDO DESCONHECIDO\r\n", cli->connfd);
 			}
-		}else{
+		} else {
 			sprintf(buff_out, "[%s] %s\r\n", cli->name, buff_in);
 			enviar_mensagem(buff_out, cli->uid);
 		}
