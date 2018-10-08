@@ -138,7 +138,7 @@ void imprimir_ip_cliente(struct sockaddr_in addr) {
 void *handle_client(void *arg) {
 	char buff_out[1024];
 	char buff_in[1024];
-	int rlen;
+	int i, rlen;
 
 	client_t *cli = (client_t *)arg;
 
@@ -156,14 +156,26 @@ void *handle_client(void *arg) {
 				enviar_mensagem_mim("<<PONG\r\n", cli->connfd);
 			} else if(!strcmp(comando, "\\NICK")) {
 				param = strtok(NULL, " ");
-				if(param) {
-					char *old_name = strdup(cli->name);
-					strcpy(cli->name, param);
-					sprintf(buff_out, "<<NICK, %s PARA %s\r\n", old_name, cli->name);
-					free(old_name);
-					enviar_mensagem_todos(buff_out, cli->sala);
-				} else {
-					enviar_mensagem_mim("<<NICK NÃO PODE ESTAR VAZIO\r\n", cli->connfd);
+				for(i = 0; i < n_clientes; ++i)
+				{
+					if(!strcmp(clientes[i]->name, param))
+					{
+						break;
+					}
+				}
+				if(i == n_clientes) {
+					if(param) {
+						char *old_name = strdup(cli->name);
+						strcpy(cli->name, param);
+						sprintf(buff_out, "<<NICK, %s PARA %s\r\n", old_name, cli->name);
+						free(old_name);
+						enviar_mensagem_todos(buff_out, cli->sala);
+					} else {
+						enviar_mensagem_mim("<<NICK NÃO PODE ESTAR VAZIO\r\n", cli->connfd);
+					}
+				}
+				else {
+					enviar_mensagem_mim("<<NICK ESTÁ EM USO\r\n", cli->connfd);
 				}
 			} else if(!strcmp(comando, "\\MENSAGEM")) {
 				param = strtok(NULL, " ");
