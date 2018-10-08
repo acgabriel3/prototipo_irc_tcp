@@ -231,6 +231,7 @@ void *tratar_cliente(void *arg) {
 				strcat(buff_out, "\\SAIR     Sair do servidor IRC\r\n");
 				strcat(buff_out, "\\SAIRC    Sair do canal atual\r\n");
 				strcat(buff_out, "\\NICK     <nick> para alterar seu nicknome\r\n");
+				strcat(buff_out, "\\USUARIO  <nome de usuário> <hostname> <nome real>\r\n");
 				strcat(buff_out, "\\LISTAR   Mostrar clientes ativos\r\n");
 				strcat(buff_out, "\\ENTRAR   <nome> Para mudar de sala\r\n");
 				strcat(buff_out, "\\AJUDA     Mostrar ajuda\r\n");
