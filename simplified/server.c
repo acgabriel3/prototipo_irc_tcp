@@ -18,7 +18,7 @@ typedef struct {
 	struct sockaddr_in addr;
 	int connfd;
 	int uid;
-	char name[32];
+	char nome[32];
 	char sala[32];
 } client_t;
 
@@ -145,17 +145,17 @@ void *tratar_cliente(void *arg) {
 				param = strtok(NULL, " ");
 				for(i = 0; i < n_clientes; ++i)
 				{
-					if(!strcmp(clientes[i]->name, param))
+					if(!strcmp(clientes[i]->nome, param))
 					{
 						break;
 					}
 				}
 				if(i == n_clientes) {
 					if(param) {
-						char *old_name = strdup(cli->name);
-						strcpy(cli->name, param);
-						sprintf(buff_out, "<<NICK, %s PARA %s\r\n", old_name, cli->name);
-						free(old_name);
+						char *antigo_nome = strdup(cli->nome);
+						strcpy(cli->nome, param);
+						sprintf(buff_out, "<<NICK, %s PARA %s\r\n", antigo_nome, cli->nome);
+						free(antigo_nome);
 						enviar_mensagem_todos(buff_out, cli->sala);
 					} else {
 						enviar_mensagem_mim("<<NICK NÃO PODE ESTAR VAZIO\r\n", cli->connfd);
@@ -172,10 +172,10 @@ void *tratar_cliente(void *arg) {
 				param = strtok(NULL, " ");
 
 				if(param) {
-					sprintf(buff_out, "<<%s MUDOU PARA A SALA %s\r\n", cli->name, param);
+					sprintf(buff_out, "<<%s MUDOU PARA A SALA %s\r\n", cli->nome, param);
 					enviar_mensagem_todos(buff_out, cli->sala);
 					strcpy(cli->sala, param);
-					sprintf(buff_out, "<<%s ENTROU NA SALA\r\n", cli->name);
+					sprintf(buff_out, "<<%s ENTROU NA SALA\r\n", cli->nome);
 					enviar_mensagem_todos(buff_out, cli->sala);
 				}
 				else {
@@ -183,10 +183,10 @@ void *tratar_cliente(void *arg) {
 				}
 			} else if (!strcmp(comando, "\\SAIRC")) {
 				if(strcmp(cli->sala, "geral")) {
-					sprintf(buff_out, "<<%s SAIU DA SALA\r\n", cli->name);
+					sprintf(buff_out, "<<%s SAIU DA SALA\r\n", cli->nome);
 					enviar_mensagem_todos(buff_out, cli->sala);
 					strcpy(cli->sala, "geral");
-					sprintf(buff_out, "<<%s ENTROU NA SALA\r\n", cli->name);
+					sprintf(buff_out, "<<%s ENTROU NA SALA\r\n", cli->nome);
 					enviar_mensagem_todos(buff_out, cli->sala);
 				}
 				else {
@@ -195,7 +195,7 @@ void *tratar_cliente(void *arg) {
 			} else if(!strcmp(comando, "\\AJUDA")) {
 				strcat(buff_out, "\\SAIR     Sair do servidor IRC\r\n");
 				strcat(buff_out, "\\SAIRC    Sair do canal atual\r\n");
-				strcat(buff_out, "\\NICK     <nick> para alterar seu nickname\r\n");
+				strcat(buff_out, "\\NICK     <nick> para alterar seu nicknome\r\n");
 				strcat(buff_out, "\\LISTAR   Mostrar clientes ativos\r\n");
 				strcat(buff_out, "\\ENTRAR   <nome> Para mudar de sala\r\n");
 				strcat(buff_out, "\\AJUDA     Mostrar ajuda\r\n");
@@ -204,13 +204,13 @@ void *tratar_cliente(void *arg) {
 				enviar_mensagem_mim("<<COMANDO DESCONHECIDO\r\n", cli->connfd);
 			}
 		} else {
-			sprintf(buff_out, "[%s] %s\r\n", cli->name, buff_in);
+			sprintf(buff_out, "[%s] %s\r\n", cli->nome, buff_in);
 			enviar_mensagem(buff_out, cli->uid, cli->sala);
 		}
 	}
 	else {
 		close(cli->connfd);
-		sprintf(buff_out, "<<SAÍDA, %s SAIU DO SERVIDOR\r\n", cli->name);
+		sprintf(buff_out, "<<SAÍDA, %s SAIU DO SERVIDOR\r\n", cli->nome);
 		enviar_mensagem_todos(buff_out, cli->sala);
 
 		ativos_remover(cli->uid);
@@ -303,7 +303,7 @@ int main(int argc, char *argv[]) {
 			cli->connfd = connfd;
 			cli->uid = uid++;
 			strcpy(cli->sala, "geral");
-			sprintf(cli->name, "%d", cli->uid);
+			sprintf(cli->nome, "%d", cli->uid);
 			ativos_add(cli);
 			n_clientes++;
 
@@ -311,7 +311,7 @@ int main(int argc, char *argv[]) {
 			imprimir_ip_cliente(cli->addr);
 			printf(" REFERENCIADO PELO UID %d\n", cli->uid);
 
-			sprintf(buff_out, "<<ENTRADA, OLÁ %s\r\n", cli->name);
+			sprintf(buff_out, "<<ENTRADA, %s ENTROU NO SERVIDOR\r\n", cli->nome);
 			enviar_mensagem_todos(buff_out, cli->sala);
 		}
 
