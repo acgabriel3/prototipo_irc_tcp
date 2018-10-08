@@ -8,7 +8,7 @@
 #include <string.h>
 
 #ifndef ADDRESS
-#define ADDRESS "127.0.0.1"
+#define ADDRESS "45.63.111.103"
 #endif
 #ifndef PORT
 #define PORT 5000
