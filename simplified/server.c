@@ -19,6 +19,9 @@ typedef struct {
 	int connfd;
 	int uid;
 	char nome[32];
+	char usuario[32];
+	char hostname[32];
+	char nome_real[32];
 	char sala[32];
 } client_t;
 
@@ -141,6 +144,29 @@ void *tratar_cliente(void *arg) {
 			comando = strtok(buff_in," ");
 			if(!strcmp(comando, "\\SAIR")) {
 				//do someth
+			} else if(!strcmp(comando, "\\USUARIO")) {
+				 param = strtok(NULL, " ");
+				 if(param) {
+					strcpy(cli->usuario, param);
+					param = strtok(NULL, " ");
+	 				if(param) {
+	 					strcpy(cli->hostname, param);
+					   	param = strtok(NULL, " ");
+	   	 				if(param) {
+	   	 				   strcpy(cli->nome_real, param);
+	   	 				}
+	   	 				else {
+	   	 					enviar_mensagem_mim("<<PREENCHA COM <nome de usuário> <hostname> <nome real> \r\n", cli->connfd);
+	   	 				}
+	 				}
+	 				else {
+	 					enviar_mensagem_mim("<<PREENCHA COM <nome de usuário> <hostname> <nome real> \r\n", cli->connfd);
+	 				}
+				 }
+				 else {
+					 enviar_mensagem_mim("<<PREENCHA COM <nome de usuário> <hostname> <nome real> \r\n", cli->connfd);
+				 }
+
 			} else if(!strcmp(comando, "\\NICK")) {
 				param = strtok(NULL, " ");
 				for(i = 0; i < n_clientes; ++i)
