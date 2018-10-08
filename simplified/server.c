@@ -24,6 +24,11 @@ typedef struct {
 
 client_t *clientes[MAX_CLIENTES];
 
+typedef struct {
+	int usuarios;
+	char nome[32];
+} canal_t;
+
 void ativos_add(client_t *cl) {
 	int i;
 	for(i = 0; i < MAX_CLIENTES; ++i) {
@@ -83,14 +88,34 @@ void enviar_mensagem_client(char *s, int uid) {
 }
 
 void enviar_clientes_ativos(int connfd) {
-	int i;
+	int i, j;
 	char s[64];
+	canal_t *canais[MAX_CLIENTES];
+	int n_canais = 0;
 	for(i = 0; i < MAX_CLIENTES; ++i) {
 		if(clientes[i]) {
-			sprintf(s, "<<CLIENT %d | %s\r\n", clientes[i]->uid, clientes[i]->name);
-			enviar_mensagem_mim(s, connfd);
+			for(j = 0; j < n_canais; ++j) {
+				if(!strcmp(clientes[i]->sala, canais[j]->nome)) {
+					canais[j]->usuarios++;
+					break;
+				}
+			}
+			if(j == n_canais)
+			{
+				canal_t *canal = (canal_t *)malloc(sizeof(canal_t));
+				strcpy(canal->nome, clientes[i]->sala);
+				canal->usuarios = 1;
+				canais[j] = canal;
+				n_canais++;
+			}
 		}
 	}
+	for(j = 0; j < n_canais; ++j) {
+		sprintf(s, "<<%s | %d\r\n", canais[j]->nome, canais[j]->usuarios);
+		enviar_mensagem_mim(s, connfd);
+		free(canais[j]);
+	}
+	//free
 }
 
 void remove_novalinha(char *s) {
@@ -160,8 +185,8 @@ void *handle_client(void *arg) {
 				} else {
 					enviar_mensagem_mim("<<REFERENCIA NÃO PODE ESTAR NULA\r\n", cli->connfd);
 				}
-			} else if(!strcmp(comando, "\\LISTA")) {
-				sprintf(buff_out, "<<CLIENTES %d\r\n", n_clientes);
+			} else if(!strcmp(comando, "\\LISTAR")) {
+				sprintf(buff_out, "<<CLIENTES ATIVOS: %d\r\n", n_clientes);
 				enviar_mensagem_mim(buff_out, cli->connfd);
 				enviar_clientes_ativos(cli->connfd);
 			} else if(!strcmp(comando, "\\SALA")) {
@@ -183,7 +208,7 @@ void *handle_client(void *arg) {
 				strcat(buff_out, "\\PING     Testar servidor\r\n");
 				strcat(buff_out, "\\NICK     <nick> para alterar seu nickname\r\n");
 				strcat(buff_out, "\\MENSAGEM  <nick> <mensagem> Enviar mensagem privada\r\n");
-				strcat(buff_out, "\\LISTA   Mostrar clientes ativos\r\n");
+				strcat(buff_out, "\\LISTAR   Mostrar clientes ativos\r\n");
 				strcat(buff_out, "\\SALA   <nome> Para mudar de sala\r\n");
 				strcat(buff_out, "\\AJUDA     Mostrar ajuda\r\n");
 				enviar_mensagem_mim(buff_out, cli->connfd);
