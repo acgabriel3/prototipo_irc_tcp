@@ -141,8 +141,6 @@ void *tratar_cliente(void *arg) {
 			comando = strtok(buff_in," ");
 			if(!strcmp(comando, "\\SAIR")) {
 				//do someth
-			} else if(!strcmp(comando, "\\PING")) {
-				enviar_mensagem_mim("<<PONG\r\n", cli->connfd);
 			} else if(!strcmp(comando, "\\NICK")) {
 				param = strtok(NULL, " ");
 				for(i = 0; i < n_clientes; ++i)
@@ -197,7 +195,6 @@ void *tratar_cliente(void *arg) {
 			} else if(!strcmp(comando, "\\AJUDA")) {
 				strcat(buff_out, "\\SAIR     Sair do servidor IRC\r\n");
 				strcat(buff_out, "\\SAIRC    Sair do canal atual\r\n");
-				strcat(buff_out, "\\PING     Testar servidor\r\n");
 				strcat(buff_out, "\\NICK     <nick> para alterar seu nickname\r\n");
 				strcat(buff_out, "\\LISTAR   Mostrar clientes ativos\r\n");
 				strcat(buff_out, "\\ENTRAR   <nome> Para mudar de sala\r\n");
