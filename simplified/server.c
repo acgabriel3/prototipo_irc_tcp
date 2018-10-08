@@ -261,7 +261,7 @@ void *tratar_cliente(void *arg) {
 }
 
 int main(int argc, char *argv[]) {
-	int i = 0, listenfd = 0, connfd = 0, max_fd = 0, fd = 0, atividade = 0;
+	int i = 0, listenfd = 0, connfd = 0, max_fd = 0, fd = 0, atividade = 0, option = 1;
 	struct sockaddr_in serv_addr;
 	struct sockaddr_in cli_addr;
 	pthread_t tid;
@@ -271,6 +271,7 @@ int main(int argc, char *argv[]) {
 	char buff_out[1024];
 
 	listenfd = socket(AF_INET, SOCK_STREAM, 0);
+	setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &option, sizeof(option));
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serv_addr.sin_port = htons(5000);
