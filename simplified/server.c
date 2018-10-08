@@ -143,7 +143,16 @@ void *tratar_cliente(void *arg) {
 			char *comando, *param;
 			comando = strtok(buff_in," ");
 			if(!strcmp(comando, "\\SAIR")) {
-				//do someth
+				close(cli->connfd);
+				sprintf(buff_out, "<<SAÍDA, %s SAIU DO SERVIDOR\r\n", cli->nome);
+				enviar_mensagem_todos(buff_out, cli->sala);
+
+				ativos_remover(cli->uid);
+				printf("<<SAIDA ");
+				imprimir_ip_cliente(cli->addr);
+				printf(" REFERENCIADO POR %d\n", cli->uid);
+				free(cli);
+				n_clientes--;
 			} else if(!strcmp(comando, "\\USUARIO")) {
 				 param = strtok(NULL, " ");
 				 if(param) {
