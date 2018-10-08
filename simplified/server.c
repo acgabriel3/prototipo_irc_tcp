@@ -76,17 +76,6 @@ void enviar_mensagem_mim(const char *s, int connfd) {
 	write(connfd, s, strlen(s));
 }
 
-void enviar_mensagem_client(char *s, int uid) {
-	int i;
-	for(i=0;i<MAX_CLIENTES;i++) {
-		if(clientes[i]) {
-			if(clientes[i]->uid == uid) {
-				write(clientes[i]->connfd, s, strlen(s));
-			}
-		}
-	}
-}
-
 void enviar_clientes_ativos(int connfd) {
 	int i, j;
 	char s[64];
@@ -115,7 +104,7 @@ void enviar_clientes_ativos(int connfd) {
 		enviar_mensagem_mim(s, connfd);
 		free(canais[j]);
 	}
-	//free
+
 }
 
 void remove_novalinha(char *s) {
@@ -135,7 +124,7 @@ void imprimir_ip_cliente(struct sockaddr_in addr) {
 		(addr.sin_addr.s_addr & 0xFF000000)>>24);
 }
 
-void *handle_client(void *arg) {
+void *tratar_cliente(void *arg) {
 	char buff_out[1024];
 	char buff_in[1024];
 	int i, rlen;
@@ -177,31 +166,11 @@ void *handle_client(void *arg) {
 				else {
 					enviar_mensagem_mim("<<NICK ESTÁ EM USO\r\n", cli->connfd);
 				}
-			} else if(!strcmp(comando, "\\MENSAGEM")) {
-				param = strtok(NULL, " ");
-				if(param) {
-					int uid = atoi(param);
-					param = strtok(NULL, " ");
-					if(param) {
-						sprintf(buff_out, "[MP][%s]", cli->name);
-						while(param != NULL) {
-							strcat(buff_out, " ");
-							strcat(buff_out, param);
-							param = strtok(NULL, " ");
-						}
-						strcat(buff_out, "\r\n");
-						enviar_mensagem_client(buff_out, uid);
-					} else {
-						enviar_mensagem_mim("<<MENSAGEM NÃO PODE ESTAR VAZIA\r\n", cli->connfd);
-					}
-				} else {
-					enviar_mensagem_mim("<<REFERENCIA NÃO PODE ESTAR NULA\r\n", cli->connfd);
-				}
 			} else if(!strcmp(comando, "\\LISTAR")) {
 				sprintf(buff_out, "<<CLIENTES ATIVOS: %d\r\n", n_clientes);
 				enviar_mensagem_mim(buff_out, cli->connfd);
 				enviar_clientes_ativos(cli->connfd);
-			} else if(!strcmp(comando, "\\SALA")) {
+			} else if(!strcmp(comando, "\\ENTRAR")) {
 				param = strtok(NULL, " ");
 
 				if(param) {
@@ -211,17 +180,27 @@ void *handle_client(void *arg) {
 					sprintf(buff_out, "<<%s ENTROU NA SALA\r\n", cli->name);
 					enviar_mensagem_todos(buff_out, cli->sala);
 				}
-				else
-				{
+				else {
 					enviar_mensagem_mim("<<PREENCHA O NOME DA SALA\r\n", cli->connfd);
+				}
+			} else if (!strcmp(comando, "\\SAIRC")) {
+				if(strcmp(cli->sala, "geral")) {
+					sprintf(buff_out, "<<%s SAIU DA SALA\r\n", cli->name);
+					enviar_mensagem_todos(buff_out, cli->sala);
+					strcpy(cli->sala, "geral");
+					sprintf(buff_out, "<<%s ENTROU NA SALA\r\n", cli->name);
+					enviar_mensagem_todos(buff_out, cli->sala);
+				}
+				else {
+					enviar_mensagem_mim("<<VOCÊ NÃO ESTÁ EM NENHUMA SALA\r\n", cli->connfd);
 				}
 			} else if(!strcmp(comando, "\\AJUDA")) {
 				strcat(buff_out, "\\SAIR     Sair do servidor IRC\r\n");
+				strcat(buff_out, "\\SAIRC    Sair do canal atual\r\n");
 				strcat(buff_out, "\\PING     Testar servidor\r\n");
 				strcat(buff_out, "\\NICK     <nick> para alterar seu nickname\r\n");
-				strcat(buff_out, "\\MENSAGEM  <nick> <mensagem> Enviar mensagem privada\r\n");
 				strcat(buff_out, "\\LISTAR   Mostrar clientes ativos\r\n");
-				strcat(buff_out, "\\SALA   <nome> Para mudar de sala\r\n");
+				strcat(buff_out, "\\ENTRAR   <nome> Para mudar de sala\r\n");
 				strcat(buff_out, "\\AJUDA     Mostrar ajuda\r\n");
 				enviar_mensagem_mim(buff_out, cli->connfd);
 			} else {
@@ -234,7 +213,7 @@ void *handle_client(void *arg) {
 	}
 	else {
 		close(cli->connfd);
-		sprintf(buff_out, "<<SAIU, TCHAU %s\r\n", cli->name);
+		sprintf(buff_out, "<<SAÍDA, %s SAIU DO SERVIDOR\r\n", cli->name);
 		enviar_mensagem_todos(buff_out, cli->sala);
 
 		ativos_remover(cli->uid);
@@ -343,7 +322,7 @@ int main(int argc, char *argv[]) {
 			fd = clientes[i]->connfd;
 
 			if(FD_ISSET(fd , &fds))
-				handle_client(clientes[i]);
+				tratar_cliente(clientes[i]);
 		}
 		sleep(1);
 	}
